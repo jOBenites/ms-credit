@@ -1,0 +1,12 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+ms-credit,com.bank.mscredit.model,Credit,0,24,0,0,0,9,0,1,0,1
+ms-credit,com.bank.mscredit.model,CustomerView,0,15,0,0,0,6,0,1,0,1
+ms-credit,com.bank.mscredit.controller,CreditController,0,81,0,2,0,17,0,8,0,7
+ms-credit,com.bank.mscredit.controller,GlobalExceptionHandler,10,0,0,0,2,0,2,0,2,0
+ms-credit,com.bank.mscredit,MsCreditApplication,8,0,0,0,3,0,2,0,2,0
+ms-credit,com.bank.mscredit.service,CreditService,0,190,2,18,0,42,2,18,0,10
+ms-credit,com.bank.mscredit.dto,CreditUpdateRequest,0,3,0,0,0,1,0,1,0,1
+ms-credit,com.bank.mscredit.dto,CreditResponse,0,3,0,0,0,1,0,1,0,1
+ms-credit,com.bank.mscredit.dto,GrantCreditRequest,0,3,0,0,0,1,0,1,0,1
+ms-credit,com.bank.mscredit.event,CreditEventProducer,30,4,0,0,9,1,1,1,1,1
+ms-credit,com.bank.mscredit.event,CustomerViewConsumer,0,48,0,0,0,11,0,2,0,2

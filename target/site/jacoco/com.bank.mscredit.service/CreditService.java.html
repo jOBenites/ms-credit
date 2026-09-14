@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CreditService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ms-credit</a> &gt; <a href="index.source.html" class="el_package">com.bank.mscredit.service</a> &gt; <span class="el_source">CreditService.java</span></div><h1>CreditService.java</h1><pre class="source lang-java linenums">package com.bank.mscredit.service;
+
+import com.bank.mscredit.dto.CreditResponse;
+import com.bank.mscredit.event.CreditEventProducer;
+import com.bank.mscredit.model.Credit;
+import com.bank.mscredit.model.CustomerView;
+import com.bank.mscredit.repository.CreditRepository;
+import com.bank.mscredit.repository.CustomerViewRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.math.BigDecimal;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+/**
+ * Servicio de gestion de creditos.
+ * Expone CRUD completo y otorgamiento de creditos aplicando las reglas de
+ * cardinalidad: cliente personal maximo 1 credito, cliente empresarial N.
+ * La validacion del tipo de cliente usa la vista local customer_view
+ * alimentada por eventos, sin llamadas REST a ms-customer.
+ */
+@Service
+@RequiredArgsConstructor
+public class CreditService {
+
+    private final CreditRepository creditRepository;
+    private final CustomerViewRepository customerViewRepository;
+    private final CreditEventProducer creditEventProducer;
+
+    /**
+     * Otorga un credito a un cliente.
+     * Valida que el monto sea positivo, que el tipo de credito sea consistente
+     * con el tipo de cliente, y que un cliente personal no tenga ya un credito.
+     *
+     * @param customerId identificador del cliente
+     * @param creditType tipo de credito (PERSONAL o BUSINESS)
+     * @param amount monto otorgado (mayor a cero)
+     * @param interestRate tasa de interes
+     * @param termMonths plazo en meses
+     * @return el credito otorgado
+     * @throws IllegalArgumentException si el cliente no existe, el tipo es invalido
+     *         o inconsistente, el monto no es positivo o el cliente personal ya
+     *         tiene un credito
+     */
+    public Credit grantCredit(String customerId, String creditType, BigDecimal amount,
+                              BigDecimal interestRate, Integer termMonths) {
+<span class="pc bpc" id="L49" title="1 of 4 branches missed.">        if (amount == null || amount.signum() &lt;= 0) {</span>
+<span class="fc" id="L50">            throw new IllegalArgumentException(&quot;El monto del credito debe ser mayor a cero&quot;);</span>
+        }
+<span class="fc" id="L52">        CustomerView customer = requireCustomer(customerId);</span>
+<span class="fc bfc" id="L53" title="All 2 branches covered.">        if (Credit.TYPE_PERSONAL.equals(creditType)) {</span>
+<span class="fc bfc" id="L54" title="All 2 branches covered.">            if (!Credit.TYPE_PERSONAL.equals(customer.getCustomerType())) {</span>
+<span class="fc" id="L55">                throw new IllegalArgumentException(&quot;Un credito personal requiere un cliente personal&quot;);</span>
+            }
+<span class="fc bfc" id="L57" title="All 2 branches covered.">            if (creditRepository.countByCustomerIdAndCreditType(customerId, Credit.TYPE_PERSONAL) &gt; 0) {</span>
+<span class="fc" id="L58">                throw new IllegalArgumentException(&quot;El cliente personal ya tiene un credito&quot;);</span>
+            }
+<span class="fc bfc" id="L60" title="All 2 branches covered.">        } else if (Credit.TYPE_BUSINESS.equals(creditType)) {</span>
+<span class="fc bfc" id="L61" title="All 2 branches covered.">            if (!Credit.TYPE_BUSINESS.equals(customer.getCustomerType())) {</span>
+<span class="fc" id="L62">                throw new IllegalArgumentException(&quot;Un credito empresarial requiere un cliente empresarial&quot;);</span>
+            }
+        } else {
+<span class="fc" id="L65">            throw new IllegalArgumentException(&quot;Tipo de credito invalido: &quot; + creditType);</span>
+        }
+<span class="fc" id="L67">        Credit saved = creditRepository.save(</span>
+                new Credit(customerId, creditType, amount, interestRate, termMonths));
+<span class="fc" id="L69">        creditEventProducer.publishCreditGranted(saved);</span>
+<span class="fc" id="L70">        return saved;</span>
+    }
+
+    /**
+     * Busca un credito por su ID.
+     *
+     * @param id identificador del credito
+     * @return optional con el credito encontrado
+     */
+    public Optional&lt;Credit&gt; findById(String id) {
+<span class="fc" id="L80">        return creditRepository.findById(id);</span>
+    }
+
+    /**
+     * Lista todos los creditos registrados.
+     *
+     * @return lista de creditos
+     */
+    public List&lt;Credit&gt; findAll() {
+<span class="fc" id="L89">        return creditRepository.findAll();</span>
+    }
+
+    /**
+     * Actualiza las condiciones de un credito existente.
+     *
+     * @param id identificador del credito
+     * @param interestRate nueva tasa de interes (nullable, mantiene la actual)
+     * @param termMonths nuevo plazo en meses (nullable, mantiene el actual)
+     * @return el credito actualizado, o empty si no se encontro
+     */
+    public Optional&lt;Credit&gt; update(String id, BigDecimal interestRate, Integer termMonths) {
+<span class="fc" id="L101">        return creditRepository.findById(id).map(credit -&gt; {</span>
+<span class="fc bfc" id="L102" title="All 2 branches covered.">            if (interestRate != null) {</span>
+<span class="fc" id="L103">                credit.setInterestRate(interestRate);</span>
+            }
+<span class="pc bpc" id="L105" title="1 of 2 branches missed.">            if (termMonths != null) {</span>
+<span class="fc" id="L106">                credit.setTermMonths(termMonths);</span>
+            }
+<span class="fc" id="L108">            return creditRepository.save(credit);</span>
+        });
+    }
+
+    /**
+     * Elimina un credito por su ID.
+     *
+     * @param id identificador del credito
+     * @return true si se elimino, false si no existia
+     */
+    public boolean delete(String id) {
+<span class="fc bfc" id="L119" title="All 2 branches covered.">        if (creditRepository.existsById(id)) {</span>
+<span class="fc" id="L120">            creditRepository.deleteById(id);</span>
+<span class="fc" id="L121">            return true;</span>
+        }
+<span class="fc" id="L123">        return false;</span>
+    }
+
+    /**
+     * Convierte una entidad Credit a su DTO de respuesta.
+     *
+     * @param credit entidad a convertir
+     * @return DTO con los campos poblados
+     */
+    public CreditResponse toResponse(Credit credit) {
+<span class="fc" id="L133">        CreditResponse response = new CreditResponse();</span>
+<span class="fc" id="L134">        response.setId(credit.getId());</span>
+<span class="fc" id="L135">        response.setCustomerId(credit.getCustomerId());</span>
+<span class="fc" id="L136">        response.setCreditType(credit.getCreditType());</span>
+<span class="fc" id="L137">        response.setAmount(credit.getAmount());</span>
+<span class="fc" id="L138">        response.setInterestRate(credit.getInterestRate());</span>
+<span class="fc" id="L139">        response.setTermMonths(credit.getTermMonths());</span>
+<span class="fc" id="L140">        response.setOutstandingBalance(credit.getOutstandingBalance());</span>
+<span class="fc" id="L141">        response.setStatus(credit.getStatus());</span>
+<span class="fc" id="L142">        return response;</span>
+    }
+
+    /**
+     * Convierte una lista de entidades Credit a DTOs de respuesta.
+     *
+     * @param credits lista de entidades
+     * @return lista de DTOs
+     */
+    public List&lt;CreditResponse&gt; toResponseList(List&lt;Credit&gt; credits) {
+<span class="fc" id="L152">        return credits.stream()</span>
+<span class="fc" id="L153">                .map(this::toResponse)</span>
+<span class="fc" id="L154">                .collect(Collectors.toList());</span>
+    }
+
+    private CustomerView requireCustomer(String customerId) {
+<span class="fc" id="L158">        return customerViewRepository.findById(customerId)</span>
+<span class="fc" id="L159">                .orElseThrow(() -&gt; new IllegalArgumentException(</span>
+                        &quot;Cliente no encontrado o no sincronizado: &quot; + customerId));
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

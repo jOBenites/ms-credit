@@ -1,0 +1,153 @@
+openapi: 3.0.3
+info:
+  title: ms-credit
+  description: Microservicio de gestión de créditos (personal máx. 1 por cliente, empresarial N) del sistema bancario.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8083
+
+paths:
+  /credits:
+    post:
+      summary: Otorgar un crédito
+      operationId: grantCredit
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GrantCreditRequest'
+      responses:
+        '201':
+          description: Crédito otorgado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreditResponse'
+        '400':
+          description: Cliente inexistente, tipo inconsistente, monto inválido o cliente personal con crédito existente
+    get:
+      summary: Listar todos los créditos
+      operationId: getAllCredits
+      responses:
+        '200':
+          description: Lista de créditos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CreditResponse'
+
+  /credits/{id}:
+    get:
+      summary: Buscar crédito por ID
+      operationId: getCreditById
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Crédito encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreditResponse'
+        '404':
+          description: Crédito no encontrado
+    put:
+      summary: Actualizar condiciones del crédito (tasa, plazo)
+      operationId: updateCredit
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreditUpdateRequest'
+      responses:
+        '200':
+          description: Crédito actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreditResponse'
+        '404':
+          description: Crédito no encontrado
+    delete:
+      summary: Eliminar crédito
+      operationId: deleteCredit
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Crédito eliminado
+        '404':
+          description: Crédito no encontrado
+
+components:
+  schemas:
+    GrantCreditRequest:
+      type: object
+      required:
+        - customerId
+        - creditType
+        - amount
+      properties:
+        customerId:
+          type: string
+          description: Cliente al que se otorga (debe existir en la vista local alimentada por eventos)
+        creditType:
+          type: string
+          enum: [PERSONAL, BUSINESS]
+          description: Debe ser consistente con el tipo de cliente
+        amount:
+          type: number
+          description: Monto otorgado, mayor a cero
+        interestRate:
+          type: number
+        termMonths:
+          type: integer
+
+    CreditUpdateRequest:
+      type: object
+      properties:
+        interestRate:
+          type: number
+        termMonths:
+          type: integer
+
+    CreditResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        customerId:
+          type: string
+        creditType:
+          type: string
+          enum: [PERSONAL, BUSINESS]
+        amount:
+          type: number
+        interestRate:
+          type: number
+        termMonths:
+          type: integer
+        outstandingBalance:
+          type: number
+        status:
+          type: string
+          enum: [ACTIVE, PAID]

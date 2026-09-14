@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Credit.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">ms-credit</a> &gt; <a href="index.source.html" class="el_package">com.bank.mscredit.model</a> &gt; <span class="el_source">Credit.java</span></div><h1>Credit.java</h1><pre class="source lang-java linenums">package com.bank.mscredit.model;
+
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+/**
+ * Entidad que representa un credito bancario (producto activo).
+ * El tipo de credito debe ser consistente con el tipo de cliente:
+ * PERSONAL (maximo 1 por cliente personal) o BUSINESS (N por cliente empresarial).
+ * Un credito es independiente de que el cliente tenga cuentas bancarias.
+ */
+@Getter
+@Setter
+@NoArgsConstructor
+@Document(collection = &quot;credit&quot;)
+public class Credit {
+
+    /** Tipo de credito personal. */
+    public static final String TYPE_PERSONAL = &quot;PERSONAL&quot;;
+    /** Tipo de credito empresarial. */
+    public static final String TYPE_BUSINESS = &quot;BUSINESS&quot;;
+    /** Estado de credito activo. */
+    public static final String STATUS_ACTIVE = &quot;ACTIVE&quot;;
+
+    @Id
+    private String id;
+
+    @Indexed
+    private String customerId;
+
+    private String creditType;
+
+    private BigDecimal amount;
+
+    private BigDecimal interestRate;
+
+    private Integer termMonths;
+
+    private BigDecimal outstandingBalance;
+
+    private String status;
+
+    @CreatedDate
+    private LocalDateTime createdAt;
+
+    @LastModifiedDate
+    private LocalDateTime updatedAt;
+
+    /**
+     * Constructor para crear un credito nuevo.
+     * El saldo pendiente inicia igual al monto otorgado y el estado en ACTIVE.
+     *
+     * @param customerId identificador del cliente
+     * @param creditType tipo de credito (PERSONAL o BUSINESS)
+     * @param amount monto otorgado
+     * @param interestRate tasa de interes
+     * @param termMonths plazo en meses
+     */
+    public Credit(String customerId, String creditType, BigDecimal amount,
+<span class="fc" id="L69">                  BigDecimal interestRate, Integer termMonths) {</span>
+<span class="fc" id="L70">        this.customerId = customerId;</span>
+<span class="fc" id="L71">        this.creditType = creditType;</span>
+<span class="fc" id="L72">        this.amount = amount;</span>
+<span class="fc" id="L73">        this.interestRate = interestRate;</span>
+<span class="fc" id="L74">        this.termMonths = termMonths;</span>
+<span class="fc" id="L75">        this.outstandingBalance = amount;</span>
+<span class="fc" id="L76">        this.status = STATUS_ACTIVE;</span>
+<span class="fc" id="L77">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
