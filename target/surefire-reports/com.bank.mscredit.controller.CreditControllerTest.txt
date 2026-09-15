@@ -1,4 +1,0 @@
--------------------------------------------------------------------------------
-Test set: com.bank.mscredit.controller.CreditControllerTest
--------------------------------------------------------------------------------
-Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.223 s -- in com.bank.mscredit.controller.CreditControllerTest
