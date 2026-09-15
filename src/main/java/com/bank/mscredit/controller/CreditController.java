@@ -3,8 +3,11 @@ package com.bank.mscredit.controller;
 import com.bank.mscredit.dto.CreditResponse;
 import com.bank.mscredit.dto.CreditUpdateRequest;
 import com.bank.mscredit.dto.GrantCreditRequest;
+import com.bank.mscredit.dto.MovementRequest;
+import com.bank.mscredit.dto.MovementResponse;
 import com.bank.mscredit.model.Credit;
 import com.bank.mscredit.service.CreditService;
+import com.bank.mscredit.service.MovementService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,7 +24,8 @@ import java.util.List;
 
 /**
  * Controlador REST para la gestion de creditos.
- * Expone otorgamiento de creditos (personales y empresariales) y CRUD completo.
+ * Expone otorgamiento de creditos (personales y empresariales), CRUD completo,
+ * registro de pagos y consulta de movimientos.
  */
 @RestController
 @RequestMapping("/credits")
@@ -29,6 +33,7 @@ import java.util.List;
 public class CreditController {
 
     private final CreditService creditService;
+    private final MovementService movementService;
 
     /**
      * Otorga un credito a un cliente.
@@ -99,5 +104,35 @@ public class CreditController {
             return ResponseEntity.noContent().build();
         }
         return ResponseEntity.notFound().build();
+    }
+
+    /**
+     * Registra un pago sobre un credito.
+     *
+     * @param id identificador del credito
+     * @param request solicitud con el monto a pagar
+     * @return el movimiento registrado con codigo 201, o 404 si el credito no existe
+     */
+    @PostMapping("/{id}/payments")
+    public ResponseEntity<MovementResponse> pay(
+            @PathVariable String id,
+            @RequestBody MovementRequest request) {
+        return movementService.pay(id, request.getAmount())
+                .map(movement -> ResponseEntity.status(HttpStatus.CREATED)
+                        .body(movementService.toMovementResponse(movement)))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    /**
+     * Lista los movimientos de un credito del mas reciente al mas antiguo.
+     *
+     * @param id identificador del credito
+     * @return lista de movimientos, o 404 si el credito no existe
+     */
+    @GetMapping("/{id}/movements")
+    public ResponseEntity<List<MovementResponse>> getMovements(@PathVariable String id) {
+        return movementService.findMovements(id)
+                .map(movements -> ResponseEntity.ok(movementService.toMovementResponseList(movements)))
+                .orElse(ResponseEntity.notFound().build());
     }
 }

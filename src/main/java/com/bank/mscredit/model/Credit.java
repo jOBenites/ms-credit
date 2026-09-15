@@ -30,6 +30,8 @@ public class Credit {
     public static final String TYPE_BUSINESS = "BUSINESS";
     /** Estado de credito activo. */
     public static final String STATUS_ACTIVE = "ACTIVE";
+    /** Estado de credito pagado. */
+    public static final String STATUS_PAID = "PAID";
 
     @Id
     private String id;

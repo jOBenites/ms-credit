@@ -40,9 +40,59 @@ paths:
                 items:
                   $ref: '#/components/schemas/CreditResponse'
 
+  /credits/{id}/payments:
+    post:
+      summary: Registrar pago de credito
+      operationId: payCredit
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MovementRequest'
+      responses:
+        '201':
+          description: Pago registrado exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MovementResponse'
+        '400':
+          description: Monto invalido, credito inactivo o monto supera saldo pendiente
+        '404':
+          description: Credito no encontrado
+
+  /credits/{id}/movements:
+    get:
+      summary: Listar movimientos de un credito (del mas reciente al mas antiguo)
+      operationId: getMovements
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Lista de movimientos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MovementResponse'
+        '404':
+          description: Credito no encontrado
+
   /credits/{id}:
     get:
-      summary: Buscar crédito por ID
+      summary: Buscar credito por ID
       operationId: getCreditById
       parameters:
         - name: id
@@ -151,3 +201,28 @@ components:
         status:
           type: string
           enum: [ACTIVE, PAID]
+
+    MovementRequest:
+      type: object
+      required:
+        - amount
+      properties:
+        amount:
+          type: number
+          description: Monto del pago (debe ser mayor a cero)
+
+    MovementResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        creditId:
+          type: string
+        movementType:
+          type: string
+          enum: [CREDIT_PAYMENT]
+        amount:
+          type: number
+        occurredAt:
+          type: string
+          format: date-time

@@ -3,8 +3,12 @@ package com.bank.mscredit.controller;
 import com.bank.mscredit.dto.CreditResponse;
 import com.bank.mscredit.dto.CreditUpdateRequest;
 import com.bank.mscredit.dto.GrantCreditRequest;
+import com.bank.mscredit.dto.MovementRequest;
+import com.bank.mscredit.dto.MovementResponse;
 import com.bank.mscredit.model.Credit;
+import com.bank.mscredit.model.Movement;
 import com.bank.mscredit.service.CreditService;
+import com.bank.mscredit.service.MovementService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -33,6 +37,9 @@ class CreditControllerTest {
 
     @Mock
     private CreditService creditService;
+
+    @Mock
+    private MovementService movementService;
 
     @InjectMocks
     private CreditController creditController;
@@ -155,6 +162,53 @@ class CreditControllerTest {
         when(creditService.delete("nonexistent")).thenReturn(false);
 
         ResponseEntity<Void> response = creditController.deleteCredit("nonexistent");
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    }
+
+    @Test
+    void pay_returns201() {
+        Movement movement = new Movement("cred-1", Movement.TYPE_CREDIT_PAYMENT, new BigDecimal("500.00"));
+        movement.setId("mov-1");
+        when(movementService.pay("cred-1", new BigDecimal("500.00"))).thenReturn(Optional.of(movement));
+        when(movementService.toMovementResponse(movement)).thenReturn(new MovementResponse());
+
+        MovementRequest request = new MovementRequest();
+        request.setAmount(new BigDecimal("500.00"));
+        ResponseEntity<MovementResponse> response = creditController.pay("cred-1", request);
+
+        assertEquals(HttpStatus.CREATED, response.getStatusCode());
+    }
+
+    @Test
+    void pay_creditNotFound_returns404() {
+        when(movementService.pay("nonexistent", new BigDecimal("500.00"))).thenReturn(Optional.empty());
+
+        MovementRequest request = new MovementRequest();
+        request.setAmount(new BigDecimal("500.00"));
+        ResponseEntity<MovementResponse> response = creditController.pay("nonexistent", request);
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+    }
+
+    @Test
+    void getMovements_returns200() {
+        Movement movement = new Movement("cred-1", Movement.TYPE_CREDIT_PAYMENT, new BigDecimal("500.00"));
+        when(movementService.findMovements("cred-1")).thenReturn(Optional.of(List.of(movement)));
+        when(movementService.toMovementResponseList(List.of(movement)))
+                .thenReturn(List.of(new MovementResponse()));
+
+        ResponseEntity<List<MovementResponse>> response = creditController.getMovements("cred-1");
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        assertEquals(1, response.getBody().size());
+    }
+
+    @Test
+    void getMovements_creditNotFound_returns404() {
+        when(movementService.findMovements("nonexistent")).thenReturn(Optional.empty());
+
+        ResponseEntity<List<MovementResponse>> response = creditController.getMovements("nonexistent");
 
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     }
